@@ -13,7 +13,7 @@
 
 #define BACKLOG         (5)
 #define SLEEP           (5)
-#define DEFAULT_PORT    (5050)
+#define DEFAULT_PORT    (80)
 
 
 int create_socket(void);
@@ -87,31 +87,42 @@ int create_socket(void)
 
 void handle_connection(int fd, struct sockaddr_in client)
 {
-    const char *rip;
+    const char *client_ip_addr;
     ssize_t rval;
     char claddr[INET_ADDRSTRLEN];
 
-    if ((rip = inet_ntop(AF_INET, &client, claddr, sizeof(claddr))) == NULL) {
+    if ((client_ip_addr = inet_ntop(AF_INET, &client, claddr, sizeof(claddr))) == NULL) {
         perror("inet_ntop");
-        rip = "unknown";
+        client_ip_addr = "unknown";
     } else {
-        printf("Client connection from %s!\n", rip);
+        printf("Client connection from %s\n", client_ip_addr);
     }
 
     do {
         char buf[BUFSIZ];
         memset(buf, 0, sizeof(buf));
+
+        // read request from a client (HTTP 1.0 request)
         rval = read(fd, buf, BUFSIZ);
         if ((rval < 0)) {
             perror("reading stream message");
         } else if (rval == 0) {
-            printf("Ending connection from %s.\n", rip);
+            printf("Ending connection from %s.\n", client_ip_addr);
         } else {
-            printf("Client (%s) sent: %s", rip, buf);
+            printf("Client (%s) sent: %s\n", client_ip_addr, buf);
         }
+
+        // TODO
+        // if there is a something represents end of request
+        // break this look
+
     } while (rval != 0);
+
+    // TODO
+    // send a response to the client
+
+    // close the fd
     close(fd);
-    exit(EXIT_SUCCESS);
 }
 
 void handle_socket(int s)
@@ -120,7 +131,6 @@ void handle_socket(int s)
     pid_t pid;
     struct sockaddr_in client;
     socklen_t length;
-    int status;
 
     memset(&client, 0, sizeof(client));
 
@@ -135,12 +145,12 @@ void handle_socket(int s)
     if (pid < 0) {
         perror("fork");
         exit(EXIT_FAILURE);
-    } else if (!pid) {
+    } else if (pid == 0) {
         // child process
         handle_connection(fd, client);
+        exit(EXIT_SUCCESS);
     } else {
         // parent process
-        waitpid(pid, &status, WUNTRACED | WCONTINUED);
     }
 }
 
