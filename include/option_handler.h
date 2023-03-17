@@ -6,7 +6,7 @@
 #include <limits.h>
 
 
-#define DEFAULT_PORT (5050)
+#define DEFAULT_PORT (80)
 #define MAX_ARG_COUNT (3)
 
 

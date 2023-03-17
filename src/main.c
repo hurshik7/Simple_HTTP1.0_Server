@@ -1,3 +1,4 @@
+#include "option_handler.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -14,48 +15,62 @@
 #define BACKLOG         (5)
 #define SLEEP           (5)
 #define DEFAULT_PORT    (80)
+#define ACCEPT_FAILURE  (-2)
 
 
-int create_socket(void);
+int create_socket(struct options* opts);
 void reap(void);
 void handle_connection(int fd, struct sockaddr_in client);
-void handle_socket(int s);
+int handle_socket(int sock_fd);
 
 
 int main(int argc, char *argv[])
 {
-    int sock_fd;
+    // initiate options, and parse command line argument
+    struct options opts;
+    options_init(&opts);
+    if (parse_arguments(argc, argv, &opts) == EXIT_FAILURE) {
+        exit(EXIT_FAILURE);                                              // NOLINT(concurrency-mt-unsafe)
+    }
 
     if (signal(SIGCHLD, (void (*)(int)) reap) == SIG_ERR) {
         perror("signal");
         exit(EXIT_FAILURE);
     }
 
-    sock_fd = create_socket();
+    opts.server_sock = create_socket(&opts);
+    if (opts.server_sock == -1) {
+        perror("open socket");
+        exit(EXIT_FAILURE);
+    }
 
     for (;;) {
         fd_set ready;
         struct timeval to;
+        int result;
 
         FD_ZERO(&ready);
-        FD_SET(sock_fd, &ready);
+        FD_SET(opts.server_sock, &ready);
         to.tv_sec = SLEEP;
         to.tv_usec = 0;
-        if (select(sock_fd + 1, &ready, 0, 0, &to) < 0) {
+        if (select(opts.server_sock + 1, &ready, 0, 0, &to) < 0) {
             if (errno != EINTR) {
                 perror("select");
             }
             continue;
         }
-        if (FD_ISSET(sock_fd, &ready)) {
-            handle_socket(sock_fd);
+        if (FD_ISSET(opts.server_sock, &ready)) {
+            result = handle_socket(opts.server_sock);
+            if (result == -1) {
+                exit(EXIT_FAILURE);
+            }
         } else {
             printf("waiting for connections...\n");
         }
     }
 }
 
-int create_socket(void)
+int create_socket(struct options* opts)
 {
     int sock;
     struct sockaddr_in server;
@@ -69,7 +84,7 @@ int create_socket(void)
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port = htons(DEFAULT_PORT);
+    server.sin_port = htons(opts->port_in);
     if (bind(sock, (struct sockaddr *)&server, sizeof(server)) != 0) {
         perror("binding socket");
         exit(EXIT_FAILURE);
@@ -79,7 +94,7 @@ int create_socket(void)
 
     if (listen(sock, BACKLOG) < 0) {
         perror("listening");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     return sock;
@@ -125,7 +140,7 @@ void handle_connection(int fd, struct sockaddr_in client)
     close(fd);
 }
 
-void handle_socket(int s)
+int handle_socket(int sock_fd)
 {
     int fd;
     pid_t pid;
@@ -135,16 +150,16 @@ void handle_socket(int s)
     memset(&client, 0, sizeof(client));
 
     length = sizeof(client);
-    fd = accept(s, (struct sockaddr *)&client, &length);
+    fd = accept(sock_fd, (struct sockaddr *)&client, &length);
     if (fd < 0) {
         perror("accept");
-        return;
+        return ACCEPT_FAILURE;
     }
 
     pid = fork();
     if (pid < 0) {
         perror("fork");
-        exit(EXIT_FAILURE);
+        return -1;
     } else if (pid == 0) {
         // child process
         handle_connection(fd, client);
@@ -152,6 +167,7 @@ void handle_socket(int s)
     } else {
         // parent process
     }
+    return 0;
 }
 
 void reap(void)
