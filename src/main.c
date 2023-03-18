@@ -1,3 +1,4 @@
+#include "http.h"
 #include "option_handler.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -21,9 +22,10 @@ int create_socket(struct options* opts);
 void reap(void);
 void handle_connection(int fd, struct sockaddr_in client);
 int handle_socket(int sock_fd);
+_Noreturn void run_server(struct options* opts);
 
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     // initiate options, and parse command line argument
     struct options opts;
@@ -37,35 +39,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    opts.server_sock = create_socket(&opts);
-    if (opts.server_sock == -1) {
-        exit(EXIT_FAILURE);
-    }
-
-    for (;;) {
-        fd_set ready;
-        struct timeval to;
-        int result;
-
-        FD_ZERO(&ready);
-        FD_SET(opts.server_sock, &ready);
-        to.tv_sec = SLEEP;
-        to.tv_usec = 0;
-        if (select(opts.server_sock + 1, &ready, 0, 0, &to) < 0) {
-            if (errno != EINTR) {
-                perror("select");
-            }
-            continue;
-        }
-        if (FD_ISSET(opts.server_sock, &ready)) {
-            result = handle_socket(opts.server_sock);
-            if (result == -1) {
-                exit(EXIT_FAILURE);
-            }
-        } else {
-            printf("waiting for connections...\n");
-        }
-    }
+    run_server(&opts);
 }
 
 int create_socket(struct options* opts)
@@ -130,16 +104,9 @@ void handle_connection(int fd, struct sockaddr_in client)
             printf("Ending connection from %s.\n", client_ip_addr);
         } else {
             printf("Client (%s) sent: %s\n", client_ip_addr, buf);
+
         }
-
-        // TODO
-        // if there is a something represents end of request
-        // break this look
-
     } while (rval != 0);
-
-    // TODO
-    // send a response to the client
 
     // close the fd
     close(fd);
@@ -179,3 +146,37 @@ void reap(void)
 {
     wait(NULL);
 }
+
+_Noreturn void run_server(struct options* opts)
+{
+    opts->server_sock = create_socket(opts);
+    if (opts->server_sock == -1) {
+        exit(EXIT_FAILURE);
+    }
+
+    for (;;) {
+        fd_set ready;
+        struct timeval to;
+        int result;
+
+        FD_ZERO(&ready);
+        FD_SET(opts->server_sock, &ready);
+        to.tv_sec = SLEEP;
+        to.tv_usec = 0;
+        if (select(opts->server_sock + 1, &ready, 0, 0, &to) < 0) {
+            if (errno != EINTR) {
+                perror("select");
+            }
+            continue;
+        }
+        if (FD_ISSET(opts->server_sock, &ready)) {
+            result = handle_socket(opts->server_sock);
+            if (result == -1) {
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            printf("waiting for connections...\n");
+        }
+    }
+}
+
