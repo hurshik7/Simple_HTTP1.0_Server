@@ -15,6 +15,7 @@ set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(SOURCE_LIST
         ${SOURCE_DIR}/conversion.c
         ${SOURCE_DIR}/error.c
+        ${SOURCE_DIR}/http.c
         ${SOURCE_DIR}/option_handler.c
         )
 
@@ -25,6 +26,7 @@ set(SOURCE_MAIN
 set(HEADER_LIST
         ${INCLUDE_DIR}/conversion.h
         ${INCLUDE_DIR}/error.h
+        ${INCLUDE_DIR}/http.h
         ${INCLUDE_DIR}/option_handler.h
         )
 set(LIBRARIES_LIST
