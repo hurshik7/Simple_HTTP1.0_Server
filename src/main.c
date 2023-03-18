@@ -14,7 +14,6 @@
 
 #define BACKLOG         (5)
 #define SLEEP           (5)
-#define DEFAULT_PORT    (80)
 #define ACCEPT_FAILURE  (-2)
 
 
@@ -40,7 +39,6 @@ int main(int argc, char *argv[])
 
     opts.server_sock = create_socket(&opts);
     if (opts.server_sock == -1) {
-        perror("open socket");
         exit(EXIT_FAILURE);
     }
 
@@ -74,12 +72,14 @@ int create_socket(struct options* opts)
 {
     int sock;
     struct sockaddr_in server;
+    int result;
 
     memset(&server, 0, sizeof(server));
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
         perror("opening socket");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     server.sin_family = AF_INET;
@@ -87,7 +87,12 @@ int create_socket(struct options* opts)
     server.sin_port = htons(opts->port_in);
     if (bind(sock, (struct sockaddr *)&server, sizeof(server)) != 0) {
         perror("binding socket");
-        exit(EXIT_FAILURE);
+        return -1;
+    }
+    result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
+    if (result < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
+        return -1;
     }
 
     printf("Listening on port %d\n", ntohs(server.sin_port));
