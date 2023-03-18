@@ -17,6 +17,7 @@ set(SOURCE_LIST
         ${SOURCE_DIR}/error.c
         ${SOURCE_DIR}/http.c
         ${SOURCE_DIR}/option_handler.c
+        ${SOURCE_DIR}/util.c
         )
 
 set(SOURCE_MAIN
@@ -28,6 +29,7 @@ set(HEADER_LIST
         ${INCLUDE_DIR}/error.h
         ${INCLUDE_DIR}/http.h
         ${INCLUDE_DIR}/option_handler.h
+        ${INCLUDE_DIR}/util.h
         )
 set(LIBRARIES_LIST
         )
