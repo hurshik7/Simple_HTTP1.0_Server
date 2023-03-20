@@ -53,3 +53,13 @@ char** tokenize_malloc(const char* str, const char* delim, uint32_t* out_count)
     temp_str = NULL;
     return ret;
 }
+
+void free_string_arr(char** str_arr, uint32_t count)
+{
+    for (uint32_t i = 0; i < count; i++) {
+        free(str_arr[i]);
+        str_arr[i] = NULL;
+    }
+    free(str_arr);
+    str_arr = NULL;
+}
