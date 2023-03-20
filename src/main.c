@@ -104,7 +104,7 @@ void handle_connection(int fd, struct sockaddr_in client)
             printf("Ending connection from %s.\n", client_ip_addr);
         } else {
             printf("Client (%s) sent: %s\n", client_ip_addr, buf);
-
+            parse_http_req(buf, fd);
         }
     } while (rval != 0);
 
