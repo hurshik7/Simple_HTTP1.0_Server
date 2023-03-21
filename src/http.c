@@ -45,14 +45,14 @@ void parse_http_req(const char* buf, int fd)
     uint32_t line_count = 0;
     char** req_lines = tokenize_malloc(buf, CRLF, &line_count);
     if (line_count < 1) {
-        perror("wrong request1");
+        perror("wrong request (line_count)");
         // TODO implement error handling and delete perror above
         return;
     }
 
-    char* request_line = req_lines[1];
+    char* request_line = req_lines[0];
     if (parse_req_first_line(request_line, &req) != 0) {
-        perror("wrong request2");
+        perror("wrong request (first line)");
         // TODO implement error handling and delete perror above
         return;
     }
@@ -60,7 +60,18 @@ void parse_http_req(const char* buf, int fd)
     printf("method: %d\n", req.version);
     printf("uri: %s\n", req.uri);
     printf("version: %d\n", req.version);
-    // TODO handle unsupported version, method here
+    if (req.version != HTTP_VERSION_10) {
+        // TODO handle unsupported version
+    }
+
+    if (req.method > HTTP_METHOD_POST || req.method < 0) {
+        // TODO handle unsupported method
+    }
+
+    // TODO do server
+
+
+    // TODO send response
 
     free_string_arr(req_lines, line_count);
 }
@@ -74,7 +85,6 @@ int parse_req_first_line(const char* req_line, http_req_t* req_out)
     if (tok == NULL) {
         return EXIT_WRONG_REQ;
     }
-
     // method
     if (strcmp(tok, "GET") == 0) {
         req_out->method = HTTP_METHOD_GET;
@@ -95,7 +105,6 @@ int parse_req_first_line(const char* req_line, http_req_t* req_out)
 
     // version
     tok = strtok(NULL, " ");
-    printf("version\n");
     if (tok == NULL) {
         return EXIT_WRONG_REQ;
     }
