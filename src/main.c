@@ -56,16 +56,16 @@ int create_socket(struct options* opts)
         return -1;
     }
 
+    result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
+    if (result < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
+        return -1;
+    }
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(opts->port_in);
     if (bind(sock, (struct sockaddr *)&server, sizeof(server)) != 0) {
         perror("binding socket");
-        return -1;
-    }
-    result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
-    if (result < 0) {
-        perror("setsockopt(SO_REUSEADDR) failed");
         return -1;
     }
 
