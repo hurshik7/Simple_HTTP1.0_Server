@@ -1,6 +1,7 @@
 #include "http.h"
 #include "util.h"
 #include <assert.h>
+#include <ncurses.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -57,9 +58,14 @@ void parse_http_req(const char* buf, int fd)
         return;
     }
 
-    printf("method: %d\n", req.version);
-    printf("uri: %s\n", req.uri);
-    printf("version: %d\n", req.version);
+//    printf("method: %d\n", req.version);
+//    printf("uri: %s\n", req.uri);
+//    printf("version: %d\n", req.version);
+    printw("method: %d\n", req.version);
+    printw("uri: %s\n", req.uri);
+    printw("version: %d\n", req.version);
+    refresh();
+
     if (req.version != HTTP_VERSION_10) {
         // TODO handle unsupported version
     }
