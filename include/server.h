@@ -8,17 +8,12 @@
 
 
 #include "option_handler.h"
-#include <ncurses.h>
-
-
-extern WINDOW *output_win;
 
 
 int create_socket(struct options* opts);
 void reap(void);
 void handle_connection(int fd, struct sockaddr_in client);
 int handle_socket(int sock_fd);
-void* run_server_thread(void* arg);
 _Noreturn void run_server(struct options *opts);
 
 
