@@ -1,10 +1,4 @@
 #include "ncurses_ui.h"
-#include <pthread.h>
-
-
-extern bool server_running;
-extern pthread_t server_thread;
-extern pthread_mutex_t screen_lock;
 
 
 void print_menu(WINDOW *menu_win, int highlight)
