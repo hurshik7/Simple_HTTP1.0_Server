@@ -29,6 +29,8 @@
 #define EXIT_WRONG_REQ (-5)
 #define EXIT_UNSUPPORTED_METHOD (-4)
 
+#define BAD_REQUEST_RES_LEN (25)
+
 
 /**
  * http_req struct contains the information of a header from a http client.
@@ -55,8 +57,9 @@ typedef struct http_res {
 int init_http_req(http_req_t* req);
 int init_http_res(http_res_t* res, int res_code);
 bool is_valid_method(const char* method);
-void parse_http_req(const char* buf, int fd);
+void httpd(const char* buf, int fd);
 int parse_req_first_line(const char* req_line, http_req_t* req_out);
+void handle_get_request(int fd, const http_req_t* req);
 
 
 #endif //HTTP_SERVER_HTTP_H
