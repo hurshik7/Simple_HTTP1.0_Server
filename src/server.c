@@ -64,21 +64,19 @@ void handle_connection(int fd, struct sockaddr_in client)
         printf("Client connection from %s\n", client_ip_addr);
     }
 
-    do {
-        char buf[BUFSIZ];
-        memset(buf, 0, sizeof(buf));
+    char buf[MAX_READ_SIZE];
+    memset(buf, 0, MAX_READ_SIZE);
 
-        // read request from a client (HTTP 1.0 request)
-        rval = read(fd, buf, BUFSIZ);
-        if ((rval < 0)) {
-            perror("reading stream message");
-        } else if (rval == 0) {
-            printf("Ending connection from %s.\n", client_ip_addr);
-        } else {
-            printf("Client (%s) sent: %s\n", client_ip_addr, buf);
-            parse_http_req(buf, fd);
-        }
-    } while (rval != 0);
+    // read request from a client (HTTP 1.0 request)
+    rval = read(fd, buf, MAX_READ_SIZE);
+    if ((rval < 0)) {
+        perror("reading stream message");
+    } else if (rval == 0) {
+        printf("Ending connection from %s.\n", client_ip_addr);
+    } else {
+        printf("Client (%s) sent: %s\n", client_ip_addr, buf);
+        httpd(buf, fd);
+    }
 
     // close the fd
     close(fd);
@@ -110,6 +108,7 @@ int handle_socket(int sock_fd)
         exit(EXIT_SUCCESS);
     } else {
         // parent process
+        close(fd);
     }
     return 0;
 }
