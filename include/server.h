@@ -5,6 +5,7 @@
 #define BACKLOG         (5)
 #define SLEEP           (5)
 #define ACCEPT_FAILURE  (-2)
+#define MAX_READ_SIZE   (65535)
 
 
 #include "option_handler.h"

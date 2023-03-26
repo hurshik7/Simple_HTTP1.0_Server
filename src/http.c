@@ -3,6 +3,10 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/fcntl.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 
 int init_http_req(http_req_t* req)
@@ -38,7 +42,7 @@ bool is_valid_method(const char* method)
     return false;
 }
 
-void parse_http_req(const char* buf, int fd)
+void httpd(const char* buf, int fd)
 {
     http_req_t req;
     init_http_req(&req);
@@ -47,15 +51,16 @@ void parse_http_req(const char* buf, int fd)
     char** req_lines = tokenize_malloc(buf, CRLF, &line_count);
     if (line_count < 1) {
         perror("wrong request (line_count)");
-        // TODO implement error handling and delete perror above
+        write(fd, "HTTP/1.0 400 Bad Request\n", BAD_REQUEST_RES_LEN);
         return;
     }
 
     char* request_line = req_lines[0];
     if (parse_req_first_line(request_line, &req) != 0) {
         perror("wrong request (first line)");
-        // TODO implement error handling and delete perror above
-        return;
+        write(fd, "HTTP/1.0 400 Bad Request\r\n", BAD_REQUEST_RES_LEN);
+        close(fd);
+        goto free_and_exit;
     }
 
     printf("method: %d\n", req.version);
@@ -66,15 +71,24 @@ void parse_http_req(const char* buf, int fd)
         // TODO handle unsupported version
     }
 
-    if (req.method > HTTP_METHOD_POST || req.method < 0) {
-        // TODO handle unsupported method
+    // TODO do server, send response
+    switch(req.method) {
+        case HTTP_METHOD_GET:
+            handle_get_request(fd, &req);
+            break;
+        case HTTP_METHOD_HEAD:
+
+            break;
+        case HTTP_METHOD_POST:
+
+            break;
+        default:
+            write(fd, "HTTP/1.0 405 Method Not Allowed\r\n", strlen("HTTP/1.0 405 Method Not Allowed\r\n"));
+            close(fd);
+            break;
     }
 
-    // TODO do server
-
-
-    // TODO send response
-
+free_and_exit:
     free_string_arr(req_lines, line_count);
 }
 
@@ -101,6 +115,9 @@ int parse_req_first_line(const char* req_line, http_req_t* req_out)
     tok = strtok(NULL, " ");
     // uri
     strncpy(req_out->uri, tok, strlen(tok));
+    if (strcmp(tok, "/") == 0) {
+        strcpy(req_out->uri, "/index.html");
+    }
     if (tok == NULL) {
         return EXIT_WRONG_REQ;
     }
@@ -129,3 +146,32 @@ int parse_req_first_line(const char* req_line, http_req_t* req_out)
     assert(tok == NULL);
     return 0;
 }
+
+void handle_get_request(int fd, const http_req_t* req)
+{
+    char path[PATH_MAX] = { '\0', };
+    char* root = getenv("PWD");
+    char data_to_send[BUFSIZ];
+
+    strcpy(path, root);
+    strcat(path, req->uri);
+    path[PATH_MAX - 1] = '\0';
+    printf("%s\n", root);
+
+    int file_fd = open(path, O_RDONLY);
+    if (file_fd != -1) {
+        // FILE FOUND
+        send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
+        ssize_t bytes_read = read(file_fd, data_to_send, BUFSIZ);
+        while (bytes_read > 0) {
+            write(fd, data_to_send, bytes_read);
+            bytes_read = read(file_fd, data_to_send, BUFSIZ);
+        }
+    } else {
+        write(fd, "HTTP/1.0 404 Not Found\n", 23);
+    }
+
+    shutdown(fd, SHUT_RDWR);
+    close(fd);
+}
+
