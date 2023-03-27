@@ -60,6 +60,7 @@ bool is_valid_method(const char* method);
 void httpd(const char* buf, int fd);
 int parse_req_first_line(const char* req_line, http_req_t* req_out);
 void handle_get_request(int fd, const http_req_t* req);
+char* get_date_header_str_malloc(void);
 
 
 #endif //HTTP_SERVER_HTTP_H

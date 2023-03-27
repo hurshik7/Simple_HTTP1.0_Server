@@ -175,3 +175,18 @@ void handle_get_request(int fd, const http_req_t* req)
     close(fd);
 }
 
+char* get_date_header_str_malloc(void)
+{
+    char date_time[50] = {'\0' };
+    time_t now = time(NULL);
+    struct tm* tm_now = gmtime(&now);
+    strftime(date_time, sizeof(date_time), "Date: %a, %d %b %Y %H:%M:%S GMT\r\n", tm_now);
+    char* ret_date_time_malloc = (char*) malloc(strlen(date_time) + 1);
+    if (ret_date_time_malloc != NULL) {
+        strncpy(ret_date_time_malloc, date_time, strlen(date_time) + 1);
+        ret_date_time_malloc[strlen(date_time)] = '\0';
+    }
+    return ret_date_time_malloc;
+}
+
+
