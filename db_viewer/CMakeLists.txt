@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(http-server
+project(http-server-db-viewer
         VERSION 0.0.1
         DESCRIPTION ""
         LANGUAGES C)
@@ -13,13 +13,8 @@ set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
 set(SOURCE_LIST
-        ${SOURCE_DIR}/conversion.c
-        ${SOURCE_DIR}/error.c
-        ${SOURCE_DIR}/http.c
         ${SOURCE_DIR}/my_ndbm.c
-        ${SOURCE_DIR}/option_handler.c
-        ${SOURCE_DIR}/server.c
-        ${SOURCE_DIR}/util.c
+        ${SOURCE_DIR}/ncurses_ui.c
         )
 
 set(SOURCE_MAIN
@@ -27,15 +22,11 @@ set(SOURCE_MAIN
         )
 
 set(HEADER_LIST
-        ${INCLUDE_DIR}/conversion.h
-        ${INCLUDE_DIR}/error.h
-        ${INCLUDE_DIR}/http.h
         ${INCLUDE_DIR}/my_ndbm.h
-        ${INCLUDE_DIR}/option_handler.h
-        ${INCLUDE_DIR}/server.h
-        ${INCLUDE_DIR}/util.h
+        ${INCLUDE_DIR}/ncurses_ui.h
         )
 set(LIBRARIES_LIST
+        Curses
         )
 
 list(APPEND TEST_REQUIRED_LIBRARIES_LIST
@@ -360,4 +351,4 @@ include_directories(${ENV_INCLUDE_DIR})
 find_path(ENV_INCLUDE_DIR dc_env/env.h)
 include_directories(${ENV_INCLUDE_DIR})
 
-add_executable_target(http-server SOURCE_LIST SOURCE_MAIN HEADER_LIST LIBRARIES_LIST "" "")
+add_executable_target(http-server-db-viewer SOURCE_LIST SOURCE_MAIN HEADER_LIST LIBRARIES_LIST "" "")
