@@ -234,3 +234,15 @@ int parse_request_headers_and_content(char **req_lines, uint32_t line_count, htt
 
     return 0;
 }
+
+int parse_post_data(const http_req_t *req, char *post_data, size_t post_data_len) {
+    // check if the content length is within the limits
+    if (req->content_length > 0 && req->content_length < post_data_len) {
+        strncpy(post_data, req->content, req->content_length);
+        post_data[req->content_length] = '\0';
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
