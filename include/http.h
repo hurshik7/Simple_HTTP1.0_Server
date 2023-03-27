@@ -40,6 +40,7 @@ typedef struct http_req {
     int version;
     char uri[PATH_MAX + 1];
     time_t if_modified_since_date;
+    char content[1024];
     uint32_t content_length;
     char content_type[CONTENT_TYPE_LEN];
 } http_req_t;
@@ -60,7 +61,10 @@ bool is_valid_method(const char* method);
 void httpd(const char* buf, int fd);
 int parse_req_first_line(const char* req_line, http_req_t* req_out);
 void handle_get_request(int fd, const http_req_t* req);
-
+void handle_post_request(int fd, const http_req_t* req);
+int parse_request_headers_and_content(char **req_lines, uint32_t line_count, http_req_t *req);
+int parse_post_data(const http_req_t *req, char *post_data, size_t post_data_len);
+int save_post_data_to_html(const char *html_file_path, const char *post_data);
 
 #endif //HTTP_SERVER_HTTP_H
 
