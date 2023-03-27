@@ -1,5 +1,6 @@
 #include "http.h"
 #include "util.h"
+#include "my_ndbm.h"
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -43,7 +44,7 @@ bool is_valid_method(const char* method)
     return false;
 }
 
-void httpd(const char* buf, int fd)
+void httpd(const char* buf, int fd, const char* client_ip_addr)
 {
     http_req_t req;
     init_http_req(&req);
@@ -83,7 +84,7 @@ void httpd(const char* buf, int fd)
             // ...
             break;
         case HTTP_METHOD_POST:
-            handle_post_request(fd, &req);
+            handle_post_request(fd, &req, client_ip_addr);
             break;
         default:
             write(fd, "HTTP/1.0 405 Method Not Allowed\r\n", strlen("HTTP/1.0 405 Method Not Allowed\r\n"));
@@ -179,7 +180,7 @@ void handle_get_request(int fd, const http_req_t* req)
     close(fd);
 }
 
-void handle_post_request(int fd, const http_req_t* req)
+void handle_post_request(int fd, const http_req_t* req, const char* client_ip_addr)
 {
     char post_data[BUFSIZ];
     int res = parse_post_data(req, post_data, BUFSIZ);
@@ -197,15 +198,34 @@ void handle_post_request(int fd, const http_req_t* req)
         // save the POST req data to the HTML file
         int save_result = save_post_data_to_html(path, post_data);
         if (save_result == 0) {
+
+            // save POST req data to db
+            DBM *db = open_post_request_db("post_requests");
+            post_req_data_t post_req_data;
+            post_req_data.client_ip_addr = client_ip_addr;
+            post_req_data.access_time = time(NULL);
+            post_req_data.req_data = post_data;
+
+            // insert the post_req_data_t object into the db
+            int result = insert_post_request_data(db, &post_req_data);
+            if (result == 0) {
+                printf("Data successfully inserted into the database.\n");
+            } else {
+                printf("Error inserting data into the database.\n");
+            }
+
+            // close the db
+            dbm_close(db);
+
             // send a response indicating success
-            write(fd, "HTTP/1.0 200 OK\r\n", strlen("HTTP/1.0 200 OK\r\n"));
+            send(fd, "HTTP/1.0 201 OK\n\n", 17, 0);
         } else {
             // send a response indicating an error occurred
-            write(fd, "HTTP/1.0 500 Internal Server Error\r\n", strlen("HTTP/1.0 500 Internal Server Error\r\n"));
+            send(fd, "HTTP/1.0 500 Internal Server Error\r\n", 36, 0);
         }
     } else {
         // fail to parse POST data
-        write(fd, "HTTP/1.0 400 Bad Request\r\n", strlen("HTTP/1.0 400 Bad Request\r\n"));
+        write(fd, "HTTP/1.0 400 Bad Request\n", 23);
     }
 
     shutdown(fd, SHUT_RDWR);
