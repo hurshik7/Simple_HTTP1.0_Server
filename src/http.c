@@ -271,15 +271,15 @@ int save_post_data_to_html(const char *html_file_path, const char *post_data) {
     file_contents[file_size] = '\0';
     fclose(html_file);
 
-    // locate </main> tag in html file
-    char *main_end = strstr(file_contents, "</main>");
-    if (main_end == NULL) {
-        perror("Error finding </main> tag");
+    // locate </body> tag in html file
+    char *body_end = strstr(file_contents, "</body>");
+    if (body_end == NULL) {
+        perror("Error finding </body> tag");
         free(file_contents);
         return -1;
     }
 
-    // insert POST req data inside a <p> tag before the </main> tag
+    // insert POST req data inside a <p> tag before the </body> tag
     FILE *new_html_file = fopen(html_file_path, "w");
     if (new_html_file == NULL) {
         perror("Error opening the HTML file for writing");
@@ -287,10 +287,10 @@ int save_post_data_to_html(const char *html_file_path, const char *post_data) {
         return -1;
     }
 
-    size_t data_position = main_end - file_contents;
+    size_t data_position = body_end - file_contents;
     fwrite(file_contents, data_position, 1, new_html_file);
     fprintf(new_html_file, "<p>%s</p>\n", post_data);
-    fwrite(main_end, file_size - data_position, 1, new_html_file);
+    fwrite(body_end, file_size - data_position, 1, new_html_file);
 
     fclose(new_html_file);
     free(file_contents);
