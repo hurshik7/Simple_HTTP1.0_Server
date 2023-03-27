@@ -75,7 +75,7 @@ void handle_connection(int fd, struct sockaddr_in client)
         printf("Ending connection from %s.\n", client_ip_addr);
     } else {
         printf("Client (%s) sent: %s\n", client_ip_addr, buf);
-        httpd(buf, fd);
+        httpd(buf, fd, client_ip_addr);
     }
 
     // close the fd
