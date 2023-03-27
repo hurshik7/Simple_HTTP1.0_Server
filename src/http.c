@@ -7,6 +7,7 @@
 #include <sys/fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <time.h>
 
 
 int init_http_req(http_req_t* req)
@@ -61,6 +62,8 @@ void httpd(const char* buf, int fd)
         write(fd, "HTTP/1.0 400 Bad Request\r\n", BAD_REQUEST_RES_LEN);
         close(fd);
         goto free_and_exit;
+    } else {
+        parse_request_headers_and_content(req_lines, line_count, &req);
     }
 
     printf("method: %d\n", req.version);
@@ -77,10 +80,10 @@ void httpd(const char* buf, int fd)
             handle_get_request(fd, &req);
             break;
         case HTTP_METHOD_HEAD:
-
+            // ...
             break;
         case HTTP_METHOD_POST:
-
+            handle_post_request(fd, &req);
             break;
         default:
             write(fd, "HTTP/1.0 405 Method Not Allowed\r\n", strlen("HTTP/1.0 405 Method Not Allowed\r\n"));
@@ -88,9 +91,10 @@ void httpd(const char* buf, int fd)
             break;
     }
 
-free_and_exit:
+    free_and_exit:
     free_string_arr(req_lines, line_count);
 }
+
 
 int parse_req_first_line(const char* req_line, http_req_t* req_out)
 {
@@ -169,6 +173,39 @@ void handle_get_request(int fd, const http_req_t* req)
         }
     } else {
         write(fd, "HTTP/1.0 404 Not Found\n", 23);
+    }
+
+    shutdown(fd, SHUT_RDWR);
+    close(fd);
+}
+
+void handle_post_request(int fd, const http_req_t* req)
+{
+    char post_data[BUFSIZ];
+    int res = parse_post_data(req, post_data, BUFSIZ);
+
+    if (res == 0) {
+        // successfully parsed POST req data
+
+        // create the file path
+        char path[PATH_MAX] = { '\0', };
+        char* root = getenv("PWD");
+        strcpy(path, root);
+        strcat(path, req->uri);
+        path[PATH_MAX - 1] = '\0';
+
+        // save the POST req data to the HTML file
+        int save_result = save_post_data_to_html(path, post_data);
+        if (save_result == 0) {
+            // send a response indicating success
+            write(fd, "HTTP/1.0 200 OK\r\n", strlen("HTTP/1.0 200 OK\r\n"));
+        } else {
+            // send a response indicating an error occurred
+            write(fd, "HTTP/1.0 500 Internal Server Error\r\n", strlen("HTTP/1.0 500 Internal Server Error\r\n"));
+        }
+    } else {
+        // fail to parse POST data
+        write(fd, "HTTP/1.0 400 Bad Request\r\n", strlen("HTTP/1.0 400 Bad Request\r\n"));
     }
 
     shutdown(fd, SHUT_RDWR);
