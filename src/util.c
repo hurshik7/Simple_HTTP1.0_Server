@@ -1,6 +1,7 @@
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 
 char** tokenize_malloc(const char* str, const char* delim, uint32_t* out_count)
@@ -62,4 +63,24 @@ void free_string_arr(char** str_arr, uint32_t count)
     }
     free(str_arr);
     str_arr = NULL;
+}
+
+const char* get_file_extension(const char* filename)
+{
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename) {
+        return NULL; // No extension found or hidden file (e.g. ".gitignore")
+    }
+    return dot + 1;
+}
+
+long get_file_size(const char* filepath)
+{
+    struct stat file_info;
+
+    if (stat(filepath, &file_info) != 0) {
+        // file not found, permission issues, etc.
+        return -1;
+    }
+    return (long) file_info.st_size;
 }

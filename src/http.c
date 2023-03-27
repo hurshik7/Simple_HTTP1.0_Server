@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <sys/fcntl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 
@@ -77,7 +78,7 @@ void httpd(const char* buf, int fd)
             handle_get_request(fd, &req);
             break;
         case HTTP_METHOD_HEAD:
-
+            handle_head_request(fd, &req);
             break;
         case HTTP_METHOD_POST:
 
@@ -156,22 +157,146 @@ void handle_get_request(int fd, const http_req_t* req)
     strcpy(path, root);
     strcat(path, req->uri);
     path[PATH_MAX - 1] = '\0';
-    printf("%s\n", root);
+//    printf("%s\n", root);
 
     int file_fd = open(path, O_RDONLY);
     if (file_fd != -1) {
         // FILE FOUND
-        send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
+        // send headers
+        send(fd, "HTTP/1.0 200 OK\r\n", 17, 0);
+        char* date_header = get_date_header_str_malloc();
+        const char* content_type_header = get_content_type_header(req->uri);
+        char* content_size_header = get_content_size_header_malloc_or_null(path);
+        char* last_modified_header = get_last_modified_header_malloc_or_null(path);
+        send(fd, date_header, strlen(date_header), 0);
+        send(fd, SERVER_HEADER, strlen(SERVER_HEADER), 0);
+        send(fd, content_type_header, strlen(content_type_header), 0);
+        if (content_size_header != NULL) {
+            send(fd, content_size_header, strlen(content_size_header), 0);
+        }
+        if (last_modified_header != NULL) {
+            send(fd, last_modified_header, strlen(last_modified_header), 0);
+        }
+        send(fd, CONNECTION_HEADER, strlen(CONNECTION_HEADER), 0);
+        send(fd, "\r\n", strlen("\r\n"), 0);
+
+        // send body
         ssize_t bytes_read = read(file_fd, data_to_send, BUFSIZ);
         while (bytes_read > 0) {
             write(fd, data_to_send, bytes_read);
             bytes_read = read(file_fd, data_to_send, BUFSIZ);
         }
+
+        free(date_header);
+        free(content_size_header);
+        free(last_modified_header);
     } else {
-        write(fd, "HTTP/1.0 404 Not Found\n", 23);
+        write(fd, "HTTP/1.0 404 Not Found\r\n", 23);
     }
 
     shutdown(fd, SHUT_RDWR);
     close(fd);
 }
 
+char* get_date_header_str_malloc(void)
+{
+    char date_time[50] = {'\0' };
+    time_t now = time(NULL);
+    struct tm* tm_now = gmtime(&now);
+    strftime(date_time, sizeof(date_time), "Date: %a, %d %b %Y %H:%M:%S GMT\r\n", tm_now);
+    char* ret_date_time_malloc = (char*) malloc(strlen(date_time) + 1);
+    if (ret_date_time_malloc != NULL) {
+        strncpy(ret_date_time_malloc, date_time, strlen(date_time) + 1);
+        ret_date_time_malloc[strlen(date_time)] = '\0';
+    }
+    return ret_date_time_malloc;
+}
+
+const char* get_content_type_header(const char* file)
+{
+    const char* file_ext = get_file_extension(file);
+    if (strcmp(file_ext, "html") == 0 || strcmp(file_ext, "htm") == 0) {
+        return "Content-Type: text/html\r\n";
+    } else if (strcmp(file_ext, "css") == 0) {
+        return "Content-Type: text/css\r\n";
+    } else if (strcmp(file_ext, "js") == 0) {
+        return "Content-Type: application/javascript\r\n";
+    }
+    return "Content-Type: application/octet-stream\r\n";
+}
+
+char* get_last_modified_header_malloc_or_null(const char* file_path)
+{
+    struct stat file_info;
+    if (stat(file_path, &file_info) == -1) {
+        return NULL;
+    }
+    char last_modified_header[BUFSIZ] = { '\0', };
+    struct tm *tm_modified = gmtime(&(file_info.st_mtime));
+    strftime(last_modified_header, sizeof(last_modified_header), "Last-Modified: %a, %d %b %Y %H:%M:%S GMT\r\n", tm_modified);
+
+    size_t len = strlen(last_modified_header);
+    char* ret_str = (char*) malloc(len + 1);
+    strncpy(ret_str, last_modified_header, len + 1);
+    ret_str[len] = '\0';
+    return ret_str;
+}
+
+char* get_content_size_header_malloc_or_null(const char* file_path)
+{
+    long file_size = get_file_size(file_path);
+    char buffer[BUFSIZ] = { '\0', };
+    if (file_size >= 0) {
+        sprintf(buffer, "Content-Length: %ld\r\n", file_size);
+    } else {
+        return NULL;
+    }
+    size_t len = strlen(buffer);
+    char* ret_str = (char*) malloc (len + 1);
+    strncpy(ret_str, buffer, len + 1);
+    ret_str[len] = '\0';
+    return ret_str;
+}
+
+void handle_head_request(int fd, const http_req_t* req)
+{
+    char path[PATH_MAX] = { '\0', };
+    char* root = getenv("PWD");
+    char data_to_send[BUFSIZ];
+
+    strcpy(path, root);
+    strcat(path, req->uri);
+    path[PATH_MAX - 1] = '\0';
+    printf("%s\n", path);
+
+    int file_fd = open(path, O_RDONLY);
+    if (file_fd != -1) {
+        // FILE FOUND
+        // send headers
+        send(fd, "HTTP/1.0 200 OK\r\n", 17, 0);
+        char* date_header = get_date_header_str_malloc();
+        const char* content_type_header = get_content_type_header(req->uri);
+        char* content_size_header = get_content_size_header_malloc_or_null(path);
+        char* last_modified_header = get_last_modified_header_malloc_or_null(path);
+
+        send(fd, date_header, strlen(date_header), 0);
+        send(fd, SERVER_HEADER, strlen(SERVER_HEADER), 0);
+        send(fd, content_type_header, strlen(content_type_header), 0);
+        if (content_size_header != NULL) {
+            send(fd, content_size_header, strlen(content_size_header), 0);
+        }
+        if (last_modified_header != NULL) {
+            send(fd, last_modified_header, strlen(last_modified_header), 0);
+        }
+        send(fd, CONNECTION_HEADER, strlen(CONNECTION_HEADER), 0);
+        send(fd, "\r\n", strlen("\r\n"), 0);
+
+        free(date_header);
+        free(content_size_header);
+    } else {
+        write(fd, "HTTP/1.0 404 Not Found\r\n", 23);
+    }
+
+    shutdown(fd, SHUT_RDWR);
+    close(fd);
+}
