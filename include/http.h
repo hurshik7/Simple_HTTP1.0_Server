@@ -40,6 +40,7 @@ typedef struct http_req {
     int version;
     char uri[PATH_MAX + 1];
     time_t if_modified_since_date;
+    char content[1024];
     uint32_t content_length;
     char content_type[CONTENT_TYPE_LEN];
 } http_req_t;
@@ -62,15 +63,18 @@ static const char* CONNECTION_HEADER = "Connection: close\n";
 int init_http_req(http_req_t* req);
 int init_http_res(http_res_t* res, int res_code);
 bool is_valid_method(const char* method);
-void httpd(const char* buf, int fd);
+void httpd(const char* buf, int fd, const char* client_ip_addr);
 int parse_req_first_line(const char* req_line, http_req_t* req_out);
 void handle_get_request(int fd, const http_req_t* req);
+void handle_post_request(int fd, const http_req_t* req, const char* client_ip_addr);
+void handle_head_request(int fd, const http_req_t* req);
+int parse_request_headers_and_content(char **req_lines, uint32_t line_count, http_req_t *req);
+int parse_post_data(const http_req_t *req, char *post_data, size_t post_data_len);
+int save_post_data_to_html(const char *html_file_path, const char *post_data);
 char* get_date_header_str_malloc(void);
 const char* get_content_type_header(const char* file);
 char* get_last_modified_header_malloc_or_null(const char* file_path);
 char* get_content_size_header_malloc_or_null(const char* file_path);
-void handle_head_request(int fd, const http_req_t* req);
-
 
 #endif //HTTP_SERVER_HTTP_H
 

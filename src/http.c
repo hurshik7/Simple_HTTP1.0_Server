@@ -1,5 +1,6 @@
 #include "http.h"
 #include "util.h"
+#include "my_ndbm.h"
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <time.h>
 
 
 int init_http_req(http_req_t* req)
@@ -43,7 +45,7 @@ bool is_valid_method(const char* method)
     return false;
 }
 
-void httpd(const char* buf, int fd)
+void httpd(const char* buf, int fd, const char* client_ip_addr)
 {
     http_req_t req;
     init_http_req(&req);
@@ -62,6 +64,8 @@ void httpd(const char* buf, int fd)
         write(fd, "HTTP/1.0 400 Bad Request\r\n", BAD_REQUEST_RES_LEN);
         close(fd);
         goto free_and_exit;
+    } else {
+        parse_request_headers_and_content(req_lines, line_count, &req);
     }
 
     printf("method: %d\n", req.version);
@@ -81,7 +85,7 @@ void httpd(const char* buf, int fd)
             handle_head_request(fd, &req);
             break;
         case HTTP_METHOD_POST:
-
+            handle_post_request(fd, &req, client_ip_addr);
             break;
         default:
             write(fd, "HTTP/1.0 405 Method Not Allowed\r\n", strlen("HTTP/1.0 405 Method Not Allowed\r\n"));
@@ -89,9 +93,10 @@ void httpd(const char* buf, int fd)
             break;
     }
 
-free_and_exit:
+    free_and_exit:
     free_string_arr(req_lines, line_count);
 }
+
 
 int parse_req_first_line(const char* req_line, http_req_t* req_out)
 {
@@ -196,6 +201,145 @@ void handle_get_request(int fd, const http_req_t* req)
 
     shutdown(fd, SHUT_RDWR);
     close(fd);
+}
+
+void handle_post_request(int fd, const http_req_t* req, const char* client_ip_addr)
+{
+    char post_data[BUFSIZ];
+    int res = parse_post_data(req, post_data, BUFSIZ);
+
+    if (res == 0) {
+        // successfully parsed POST req data
+
+        // create the file path
+        char path[PATH_MAX] = { '\0', };
+        char* root = getenv("PWD");
+        strcpy(path, root);
+        strcat(path, req->uri);
+        path[PATH_MAX - 1] = '\0';
+
+        // save the POST req data to the HTML file
+        int save_result = save_post_data_to_html(path, post_data);
+        if (save_result == 0) {
+
+            // save POST req data to db
+            DBM *db = open_post_request_db("post_requests");
+            post_req_data_t post_req_data;
+            post_req_data.client_ip_addr = client_ip_addr;
+            post_req_data.access_time = time(NULL);
+            post_req_data.req_data = post_data;
+
+            // insert the post_req_data_t object into the db
+            int result = insert_post_request_data(db, &post_req_data);
+            if (result == 0) {
+                printf("Data successfully inserted into the database.\n");
+            } else {
+                printf("Error inserting data into the database.\n");
+            }
+
+            // close the db
+            dbm_close(db);
+
+            // send a response indicating success
+            send(fd, "HTTP/1.0 201 OK\n\n", 17, 0);
+        } else {
+            // send a response indicating an error occurred
+            send(fd, "HTTP/1.0 500 Internal Server Error\r\n", 36, 0);
+        }
+    } else {
+        // fail to parse POST data
+        write(fd, "HTTP/1.0 400 Bad Request\n", 23);
+    }
+
+    shutdown(fd, SHUT_RDWR);
+    close(fd);
+}
+
+int parse_request_headers_and_content(char **req_lines, uint32_t line_count, http_req_t *req)
+{
+    for (uint32_t i = 1; i < line_count; i++) {
+        char *line = req_lines[i];
+
+        if (strncmp(line, "Content-Length:", 15) == 0) {
+            req->content_length = (uint32_t)strtol(line + 15, NULL, 10);
+        } else if (strncmp(line, "Content-Type:", 13) == 0) {
+            strncpy(req->content_type, line + 13, CONTENT_TYPE_LEN - 1);
+            req->content_type[CONTENT_TYPE_LEN - 1] = '\0';
+        }
+    }
+
+    if (req->content_length > 0 && req->content_length < BUFSIZ) {
+        strncpy(req->content, req_lines[line_count - 1], req->content_length);
+        req->content[req->content_length] = '\0';
+    } else {
+        req->content_length = 0;
+    }
+
+    return 0;
+}
+
+int parse_post_data(const http_req_t *req, char *post_data, size_t post_data_len) 
+{
+    // check if the content length is within the limits
+    if (req->content_length > 0 && req->content_length < post_data_len) {
+        strncpy(post_data, req->content, req->content_length);
+        post_data[req->content_length] = '\0';
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+int save_post_data_to_html(const char *html_file_path, const char *post_data) 
+{
+    // read the entire HTML file
+    char *file_contents = NULL;
+    long file_size = 0;
+    FILE *html_file = fopen(html_file_path, "r");
+    if (html_file == NULL) {
+        perror("Error opening the HTML file");
+        return -1;
+    }
+
+    fseek(html_file, 0, SEEK_END);
+    file_size = ftell(html_file);
+    rewind(html_file);
+
+    file_contents = (char *)malloc(file_size + 1);
+    if (file_contents == NULL) {
+        perror("Error allocating memory");
+        fclose(html_file);
+        return -1;
+    }
+
+    fread(file_contents, file_size, 1, html_file);
+    file_contents[file_size] = '\0';
+    fclose(html_file);
+
+    // locate </body> tag in html file
+    char *body_end = strstr(file_contents, "</body>");
+    if (body_end == NULL) {
+        perror("Error finding </body> tag");
+        free(file_contents);
+        return -1;
+    }
+
+    // insert POST req data inside a <p> tag before the </body> tag
+    FILE *new_html_file = fopen(html_file_path, "w");
+    if (new_html_file == NULL) {
+        perror("Error opening the HTML file for writing");
+        free(file_contents);
+        return -1;
+    }
+
+    size_t data_position = body_end - file_contents;
+    fwrite(file_contents, data_position, 1, new_html_file);
+    fprintf(new_html_file, "<p>%s</p>\n", post_data);
+    fwrite(body_end, file_size - data_position, 1, new_html_file);
+
+    fclose(new_html_file);
+    free(file_contents);
+    return 0;
 }
 
 char* get_date_header_str_malloc(void)
