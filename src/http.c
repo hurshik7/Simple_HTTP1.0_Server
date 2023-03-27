@@ -212,3 +212,25 @@ void handle_post_request(int fd, const http_req_t* req)
     close(fd);
 }
 
+int parse_request_headers_and_content(char **req_lines, uint32_t line_count, http_req_t *req)
+{
+    for (uint32_t i = 1; i < line_count; i++) {
+        char *line = req_lines[i];
+
+        if (strncmp(line, "Content-Length:", 15) == 0) {
+            req->content_length = (uint32_t)strtol(line + 15, NULL, 10);
+        } else if (strncmp(line, "Content-Type:", 13) == 0) {
+            strncpy(req->content_type, line + 13, CONTENT_TYPE_LEN - 1);
+            req->content_type[CONTENT_TYPE_LEN - 1] = '\0';
+        }
+    }
+
+    if (req->content_length > 0 && req->content_length < BUFSIZ) {
+        strncpy(req->content, req_lines[line_count - 1], req->content_length);
+        req->content[req->content_length] = '\0';
+    } else {
+        req->content_length = 0;
+    }
+
+    return 0;
+}
