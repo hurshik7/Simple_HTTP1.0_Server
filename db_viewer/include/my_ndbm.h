@@ -20,6 +20,9 @@ typedef struct PostReqData {
 
 DBM *open_post_request_db(const char *db_path);
 void print_post_request_data(DBM *db);
+void print_box_choices(WINDOW *box_win, int highlight);
+WINDOW* create_box_window(void);
+int navigate_box(WINDOW *box_win);
 
 
 #endif /* DB_VIEWER_MY_NDBM_H */
