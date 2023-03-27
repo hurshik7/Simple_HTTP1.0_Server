@@ -246,3 +246,53 @@ int parse_post_data(const http_req_t *req, char *post_data, size_t post_data_len
     }
 }
 
+int save_post_data_to_html(const char *html_file_path, const char *post_data) {
+    // read the entire HTML file
+    char *file_contents = NULL;
+    long file_size = 0;
+    FILE *html_file = fopen(html_file_path, "r");
+    if (html_file == NULL) {
+        perror("Error opening the HTML file");
+        return -1;
+    }
+
+    fseek(html_file, 0, SEEK_END);
+    file_size = ftell(html_file);
+    rewind(html_file);
+
+    file_contents = (char *)malloc(file_size + 1);
+    if (file_contents == NULL) {
+        perror("Error allocating memory");
+        fclose(html_file);
+        return -1;
+    }
+
+    fread(file_contents, file_size, 1, html_file);
+    file_contents[file_size] = '\0';
+    fclose(html_file);
+
+    // locate </main> tag in html file
+    char *main_end = strstr(file_contents, "</main>");
+    if (main_end == NULL) {
+        perror("Error finding </main> tag");
+        free(file_contents);
+        return -1;
+    }
+
+    // insert POST req data inside a <p> tag before the </main> tag
+    FILE *new_html_file = fopen(html_file_path, "w");
+    if (new_html_file == NULL) {
+        perror("Error opening the HTML file for writing");
+        free(file_contents);
+        return -1;
+    }
+
+    size_t data_position = main_end - file_contents;
+    fwrite(file_contents, data_position, 1, new_html_file);
+    fprintf(new_html_file, "<p>%s</p>\n", post_data);
+    fwrite(main_end, file_size - data_position, 1, new_html_file);
+
+    fclose(new_html_file);
+    free(file_contents);
+    return 0;
+}
