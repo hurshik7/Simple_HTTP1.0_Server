@@ -17,7 +17,6 @@ set(SOURCE_LIST
         ${SOURCE_DIR}/error.c
         ${SOURCE_DIR}/http.c
         ${SOURCE_DIR}/my_ndbm.c
-        ${SOURCE_DIR}/ncurses_ui.c
         ${SOURCE_DIR}/option_handler.c
         ${SOURCE_DIR}/server.c
         ${SOURCE_DIR}/util.c
@@ -32,13 +31,11 @@ set(HEADER_LIST
         ${INCLUDE_DIR}/error.h
         ${INCLUDE_DIR}/http.h
         ${INCLUDE_DIR}/my_ndbm.h
-        ${INCLUDE_DIR}/ncurses_ui.h
         ${INCLUDE_DIR}/option_handler.h
         ${INCLUDE_DIR}/server.h
         ${INCLUDE_DIR}/util.h
         )
 set(LIBRARIES_LIST
-        Curses
         )
 
 list(APPEND TEST_REQUIRED_LIBRARIES_LIST
