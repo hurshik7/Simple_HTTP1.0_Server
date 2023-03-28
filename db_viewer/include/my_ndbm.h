@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <ndbm.h>
+#include <ncurses.h>
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
