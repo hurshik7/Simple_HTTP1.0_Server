@@ -289,13 +289,6 @@ endfunction()
 function(link_gtk_libraries target_name)
 endfunction()
 
-function(link_ndbm_libraries target_name)
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Fedora")
-        target_link_libraries(${target_name} PRIVATE gdbm gdbm_compat)
-    else ()
-    endif ()
-endfunction()
-
 function(add_executable_target target_name source_files main_source_files header_files libraries_files link_libraries_fn install_name)
     add_executable(${target_name} ${${source_files}} ${${main_source_files}} ${${header_files}})
 
@@ -352,6 +345,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib64")
     set(CMAKE_BUILD_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib64")
 endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Fedora")
+    target_link_libraries(${target_name} PRIVATE gdbm gdbm_compat)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(${INCLUDE_DIR})
