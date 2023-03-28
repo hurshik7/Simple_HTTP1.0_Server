@@ -15,7 +15,7 @@ WINDOW* create_menu_window(void);
 int navigate_menu(WINDOW* menu_win);
 void print_title(int startx);
 void init_ncurses(void);
-void view_database_wrapper(const char* path);
+void view_database_wrapper(char* path);
 
 
 #endif //HTTP_SERVER_NCURSES_UI_H

@@ -12,6 +12,10 @@
 #include <time.h>
 
 
+static const char* SERVER_HEADER = "Server: COMP4981_HTTP_SERVER/1.0\n";
+static const char* CONNECTION_HEADER = "Connection: close\n";
+
+
 int init_http_req(http_req_t* req)
 {
     req->method = -1;
@@ -30,19 +34,6 @@ int init_http_res(http_res_t* res, int res_code)
     memset(res->content_type, '\0', sizeof(res->content_type));
     res->last_modified = -1;
     return 0;
-}
-
-bool is_valid_method(const char* method)
-{
-    const char* methods[] = {"GET", "POST", "HEAD", NULL};
-    int i = 0;
-    while (methods[i] != NULL) {
-        if (strcmp(method, methods[i]) == 0) {
-            return true;
-        }
-        i++;
-    }
-    return false;
 }
 
 void httpd(const char* buf, int fd, const char* client_ip_addr)
@@ -72,11 +63,6 @@ void httpd(const char* buf, int fd, const char* client_ip_addr)
     printf("uri: %s\n", req.uri);
     printf("version: %d\n", req.version);
 
-    if (req.version != HTTP_VERSION_10) {
-        // TODO handle unsupported version
-    }
-
-    // TODO do server, send response
     switch(req.method) {
         case HTTP_METHOD_GET:
             handle_get_request(fd, &req);
@@ -222,8 +208,18 @@ void handle_post_request(int fd, const http_req_t* req, const char* client_ip_ad
         int save_result = save_post_data_to_html(path, post_data);
         if (save_result == 0) {
 
+            const char* home_dir = getenv("HOME");
+            char db_path[PATH_MAX] = { '\0', };
+            if (home_dir != NULL) {
+                strcpy(db_path, home_dir);
+                strcat(db_path, "/");
+                strncat(db_path, DB_NAME, PATH_MAX - strlen(db_path));
+                db_path[PATH_MAX - 1] = '\0';
+            } else {
+                strcpy(db_path, DB_NAME);
+            }
             // save POST req data to db
-            DBM *db = open_post_request_db("post_requests");
+            DBM *db = open_post_request_db(db_path);
             post_req_data_t post_req_data;
             post_req_data.client_ip_addr = client_ip_addr;
             post_req_data.access_time = time(NULL);
@@ -294,7 +290,7 @@ int save_post_data_to_html(const char *html_file_path, const char *post_data)
 {
     // read the entire HTML file
     char *file_contents = NULL;
-    long file_size = 0;
+    long file_size;
     FILE *html_file = fopen(html_file_path, "r");
     if (html_file == NULL) {
         perror("Error opening the HTML file");
@@ -365,6 +361,8 @@ const char* get_content_type_header(const char* file)
         return "Content-Type: text/css\r\n";
     } else if (strcmp(file_ext, "js") == 0) {
         return "Content-Type: application/javascript\r\n";
+    } else if (strcmp(file_ext, "png") == 0) {
+        return "Content-Type: image/png\r\n";
     }
     return "Content-Type: application/octet-stream\r\n";
 }
@@ -406,7 +404,6 @@ void handle_head_request(int fd, const http_req_t* req)
 {
     char path[PATH_MAX] = { '\0', };
     char* root = getenv("PWD");
-    char data_to_send[BUFSIZ];
 
     strcpy(path, root);
     strcat(path, req->uri);

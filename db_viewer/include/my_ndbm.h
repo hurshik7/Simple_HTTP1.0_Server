@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <ndbm.h>
+#include <ncurses.h>
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
@@ -19,7 +20,7 @@ typedef struct PostReqData {
 } post_req_data_t;
 
 
-DBM *open_post_request_db(const char *db_path);
+DBM *open_post_request_db(char *db_path);
 void print_post_request_data(DBM *db);
 void print_box_choices(WINDOW *box_win, int highlight);
 WINDOW* create_box_window(void);

@@ -88,7 +88,7 @@ void init_ncurses(void)
     cbreak();
 }
 
-void view_database_wrapper(const char* path)
+void view_database_wrapper(char* path)
 {
     clear();
     refresh();

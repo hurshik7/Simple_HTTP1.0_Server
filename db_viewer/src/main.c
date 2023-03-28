@@ -4,22 +4,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 
 int main(void)
 {
     char path[PATH_MAX] = { '\0', };
-    char* cwd = getcwd(path, PATH_MAX);
-    if (cwd == NULL) {
-        perror("getcwd");
+    const char* home_dir = getenv("HOME");
+    if (home_dir != NULL) {
+        strcpy(path, home_dir);
+        strcat(path, "/");
+        strncat(path, DB_NAME, PATH_MAX - strlen(path));
+        path[PATH_MAX - 1] = '\0';
+    } else {
+        perror("ERROR: wrong DB path");
     }
-    char* ptr = strstr(path, "db_viewer");
-    ptr += strlen("db_viewer");
-    *ptr = '/';
-    *(++ptr) = '\0';
-    strcat(path, "db/");
-    strcat(path, DB_NAME);
 
     init_ncurses();
     WINDOW* menu_win = create_menu_window();

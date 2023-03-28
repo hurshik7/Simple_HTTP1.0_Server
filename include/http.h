@@ -21,14 +21,7 @@
 #define HTTP_METHOD_POST (2)
 #define HTTP_METHOD_NOT_SUPPORTED (99)
 
-#define RES_TYPE_HTML "text/html"
-#define RES_TYPE_CSS "text/css"
-#define RES_TYPE_JS "text/js"
-#define RES_TYPE_PNG "image/png"
-
 #define EXIT_WRONG_REQ (-5)
-#define EXIT_UNSUPPORTED_METHOD (-4)
-
 #define BAD_REQUEST_RES_LEN (25)
 
 
@@ -56,13 +49,8 @@ typedef struct http_res {
 } http_res_t;
 
 
-static const char* SERVER_HEADER = "Server: COMP4981_HTTP_SERVER/1.0\n";
-static const char* CONNECTION_HEADER = "Connection: close\n";
-
-
 int init_http_req(http_req_t* req);
 int init_http_res(http_res_t* res, int res_code);
-bool is_valid_method(const char* method);
 void httpd(const char* buf, int fd, const char* client_ip_addr);
 int parse_req_first_line(const char* req_line, http_req_t* req_out);
 void handle_get_request(int fd, const http_req_t* req);
