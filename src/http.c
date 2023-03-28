@@ -59,10 +59,6 @@ void httpd(const char* buf, int fd, const char* client_ip_addr)
     printf("uri: %s\n", req.uri);
     printf("version: %d\n", req.version);
 
-    if (req.version != HTTP_VERSION_10) {
-        // TODO handle unsupported version
-    }
-
     switch(req.method) {
         case HTTP_METHOD_GET:
             handle_get_request(fd, &req);
@@ -361,6 +357,8 @@ const char* get_content_type_header(const char* file)
         return "Content-Type: text/css\r\n";
     } else if (strcmp(file_ext, "js") == 0) {
         return "Content-Type: application/javascript\r\n";
+    } else if (strcmp(file_ext, "png") == 0) {
+        return "Content-Type: image/png\r\n";
     }
     return "Content-Type: application/octet-stream\r\n";
 }
