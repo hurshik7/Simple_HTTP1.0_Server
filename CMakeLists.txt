@@ -362,6 +362,5 @@ find_path(ENV_INCLUDE_DIR dc_env/env.h)
 include_directories(${ENV_INCLUDE_DIR})
 
 find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
-include_directories(${NDBM_LIBRARY})
 
-add_executable_target(http-server SOURCE_LIST SOURCE_MAIN HEADER_LIST LIBRARIES_LIST "" "")
+add_executable_target(http-server SOURCE_LIST SOURCE_MAIN HEADER_LIST LIBRARIES_LIST ${NDBM_LIBRARY} "" "")
