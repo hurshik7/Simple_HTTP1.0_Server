@@ -36,6 +36,7 @@ set(HEADER_LIST
         ${INCLUDE_DIR}/util.h
         )
 set(LIBRARIES_LIST
+        gdbm
         )
 
 list(APPEND TEST_REQUIRED_LIBRARIES_LIST
@@ -345,10 +346,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib64")
     set(CMAKE_BUILD_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib64")
 endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Fedora")
-    target_link_libraries(http-server PRIVATE gdbm gdbm_compat)
-endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(${INCLUDE_DIR})
