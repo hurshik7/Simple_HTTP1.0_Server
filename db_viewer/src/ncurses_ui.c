@@ -99,28 +99,26 @@ void view_database_wrapper(char* path)
     DBM *db = open_post_request_db(path);
     if (db != NULL) {
         print_post_request_data(db);
-    }
-
-    WINDOW* box_win = create_box_window();
-    keypad(box_win, TRUE);
-    int box_choice;
-    while (1) {
-        box_choice = navigate_box(box_win);
-        if (box_choice == 1) { // Refresh
-            dbm_close(db);
-            clear();
-            refresh();
-            db = open_post_request_db(path);
-            if (db != NULL) {
-                print_post_request_data(db);
+        WINDOW* box_win = create_box_window();
+        keypad(box_win, TRUE);
+        int box_choice;
+        while (1) {
+            box_choice = navigate_box(box_win);
+            if (box_choice == 1) { // Refresh
+                dbm_close(db);
+                clear();
+                refresh();
+                db = open_post_request_db(path);
+                if (db != NULL) {
+                    print_post_request_data(db);
+                }
+            } else if (box_choice == 2) { // Back
+                break;
             }
-        } else if (box_choice == 2) { // Back
-            break;
         }
+        delwin(box_win);
+        dbm_close(db);
     }
-
-    delwin(box_win);
-    dbm_close(db);
     getch();
     clear();
     refresh();
