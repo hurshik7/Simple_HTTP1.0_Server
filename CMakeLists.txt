@@ -310,14 +310,14 @@ function(add_executable_target target_name source_files main_source_files header
     #    add_dependencies(${target_name} clang-tidy-${target_name})
     clangtidy(${target_name} ${source_files} ${main_source_files})
 
+    ## for Fedora
+    find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
+    target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
+
     if (NOT "${install_name}" STREQUAL "")
         set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${install_name})
         install(TARGETS ${target_name} DESTINATION bin)
     endif ()
-
-    ## for Fedora
-    find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
-    target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
 endfunction()
 
 function(add_test_target target_name source_files header_files test_source_files test_header_files libraries_files link_libraries_fn)
