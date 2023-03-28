@@ -237,14 +237,29 @@ void handle_post_request(int fd, const http_req_t* req, const char* client_ip_ad
             dbm_close(db);
 
             // send a response indicating success
-            send(fd, "HTTP/1.0 201 OK\n\n", 17, 0);
+            const char* response = "HTTP/1.0 200 OK\r\n"
+                                   "Content-Type: text/plain\r\n"
+                                   "Content-Length: 17\r\n"
+                                   "\r\n"
+                                   "HTTP/1.0 200 OK\r\n";
+            send(fd, response, strlen(response), 0);
         } else {
             // send a response indicating an error occurred
-            send(fd, "HTTP/1.0 500 Internal Server Error\r\n", 36, 0);
+            const char* response = "HTTP/1.0 500 Internal Server Error\r\n"
+                                   "Content-Type: text/plain\r\n"
+                                   "Content-Length: 36\r\n"
+                                   "\r\n"
+                                   "HTTP/1.0 500 Internal Server Error\r\n";
+            send(fd, response, strlen(response), 0);
         }
     } else {
         // fail to parse POST data
-        write(fd, "HTTP/1.0 400 Bad Request\n", 23);
+        const char* response = "HTTP/1.0 400 Bad Request\r\n"
+                               "Content-Type: text/plain\r\n"
+                               "Content-Length: 26\r\n"
+                               "\r\n"
+                               "HTTP/1.0 400 Bad Request\r\n";
+        send(fd, response, strlen(response), 0);
     }
 
     shutdown(fd, SHUT_RDWR);
