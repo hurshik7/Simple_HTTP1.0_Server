@@ -347,7 +347,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Fedora")
-    target_link_libraries(${target_name} PRIVATE gdbm gdbm_compat)
+    target_link_libraries(http-server PRIVATE gdbm gdbm_compat)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
