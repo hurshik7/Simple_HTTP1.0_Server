@@ -293,6 +293,10 @@ endfunction()
 function(add_executable_target target_name source_files main_source_files header_files libraries_files link_libraries_fn install_name)
     add_executable(${target_name} ${${source_files}} ${${main_source_files}} ${${header_files}})
 
+    ## for Fedora
+    find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
+    target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
+
     list(LENGTH ${libraries_files} list_length)
     if (list_length)
         link_libraries(${target_name} ${libraries_files})
@@ -309,10 +313,6 @@ function(add_executable_target target_name source_files main_source_files header
     add_dependencies(${target_name} doxygen)
     #    add_dependencies(${target_name} clang-tidy-${target_name})
     clangtidy(${target_name} ${source_files} ${main_source_files})
-
-    ## for Fedora
-    find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
-    target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
 
     if (NOT "${install_name}" STREQUAL "")
         set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${install_name})
