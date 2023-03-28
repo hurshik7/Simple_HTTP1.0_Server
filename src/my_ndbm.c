@@ -1,6 +1,6 @@
 #include "my_ndbm.h"
 
-DBM *open_post_request_db(const char *db_path) {
+DBM *open_post_request_db(char* db_path) {
     DBM *db = dbm_open(db_path, O_CREAT | O_RDWR | O_SYNC | O_APPEND, 0644);
     if (db == NULL) {
         perror("Error opening NDBM database");

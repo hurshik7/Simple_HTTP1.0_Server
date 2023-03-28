@@ -12,6 +12,10 @@
 #include <time.h>
 
 
+static const char* SERVER_HEADER = "Server: COMP4981_HTTP_SERVER/1.0\n";
+static const char* CONNECTION_HEADER = "Connection: close\n";
+
+
 int init_http_req(http_req_t* req)
 {
     req->method = -1;

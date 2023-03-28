@@ -19,7 +19,7 @@ typedef struct PostReqData {
 } post_req_data_t;
 
 
-DBM *open_post_request_db(const char *db_path);
+DBM *open_post_request_db(char* db_path);
 int insert_post_request_data(DBM *db, post_req_data_t *post_req_data);
 
 
