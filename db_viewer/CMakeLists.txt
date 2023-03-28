@@ -27,7 +27,6 @@ set(HEADER_LIST
         )
 set(LIBRARIES_LIST
         ncurses
-        gdbm
         )
 
 list(APPEND TEST_REQUIRED_LIBRARIES_LIST
@@ -285,8 +284,10 @@ function(add_executable_target target_name source_files main_source_files header
     add_executable(${target_name} ${${source_files}} ${${main_source_files}} ${${header_files}})
 
     ## for Fedora
-    find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
-    target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Fedora")
+        find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
+        target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
+    endif()
 
     list(LENGTH ${libraries_files} list_length)
     if (list_length)
