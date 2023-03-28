@@ -21,11 +21,6 @@
 #define HTTP_METHOD_POST (2)
 #define HTTP_METHOD_NOT_SUPPORTED (99)
 
-#define RES_TYPE_HTML "text/html"
-#define RES_TYPE_CSS "text/css"
-#define RES_TYPE_JS "text/js"
-#define RES_TYPE_PNG "image/png"
-
 #define EXIT_WRONG_REQ (-5)
 #define BAD_REQUEST_RES_LEN (25)
 
