@@ -26,7 +26,7 @@ set(HEADER_LIST
         ${INCLUDE_DIR}/ncurses_ui.h
         )
 set(LIBRARIES_LIST
-        Curses
+        ncurses
         gdbm
         )
 
