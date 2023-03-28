@@ -88,7 +88,7 @@ void init_ncurses(void)
     cbreak();
 }
 
-void view_database_wrapper(const char* path)
+void view_database_wrapper(char* path)
 {
     clear();
     refresh();
@@ -188,7 +188,7 @@ WINDOW* create_box_window(void)
     int box_height = 4;
     int box_width = 16;
     int box_startx = (COLS - box_width) / 2;
-    int box_starty = LINES - (int) (LINES * 10 / 100) - 2;
+    int box_starty = LINES - (LINES * 10 / 100) - 2;
     WINDOW *box_win = newwin(box_height, box_width, box_starty, box_startx);
     return box_win;
 }
