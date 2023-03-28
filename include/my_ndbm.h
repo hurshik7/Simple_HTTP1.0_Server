@@ -9,6 +9,9 @@
 #include <time.h>
 
 
+#define DB_NAME "post_requests"
+
+
 typedef struct PostReqData {
     const char* client_ip_addr;
     time_t access_time;
