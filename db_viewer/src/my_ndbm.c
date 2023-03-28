@@ -14,7 +14,7 @@
 } while (0)
 
 
-DBM *open_post_request_db(const char *db_path)
+DBM *open_post_request_db(char *db_path)
 {
     DBM *db = dbm_open(db_path, O_RDONLY, 0);
     if (db == NULL) {
