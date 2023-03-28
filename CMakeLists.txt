@@ -314,6 +314,10 @@ function(add_executable_target target_name source_files main_source_files header
         set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${install_name})
         install(TARGETS ${target_name} DESTINATION bin)
     endif ()
+
+    ## for Fedora
+    find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
+    target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
 endfunction()
 
 function(add_test_target target_name source_files header_files test_source_files test_header_files libraries_files link_libraries_fn)
@@ -361,6 +365,4 @@ include_directories(${ENV_INCLUDE_DIR})
 find_path(ENV_INCLUDE_DIR dc_env/env.h)
 include_directories(${ENV_INCLUDE_DIR})
 
-find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
-
-add_executable_target(http-server SOURCE_LIST SOURCE_MAIN HEADER_LIST LIBRARIES_LIST ${NDBM_LIBRARY} "" "")
+add_executable_target(http-server SOURCE_LIST SOURCE_MAIN HEADER_LIST LIBRARIES_LIST "" "")
