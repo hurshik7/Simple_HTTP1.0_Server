@@ -212,9 +212,11 @@ void handle_post_request(int fd, const http_req_t* req, const char* client_ip_ad
             char db_path[PATH_MAX] = { '\0', };
             if (home_dir != NULL) {
                 strcpy(db_path, home_dir);
-                strcat(db_path, "/post_requests");
+                strcat(db_path, "/");
+                strncat(db_path, DB_NAME, PATH_MAX - strlen(db_path));
+                db_path[PATH_MAX - 1] = '\0';
             } else {
-                strcpy(db_path, "post_requests");
+                strcpy(db_path, DB_NAME);
             }
             // save POST req data to db
             DBM *db = open_post_request_db(db_path);
