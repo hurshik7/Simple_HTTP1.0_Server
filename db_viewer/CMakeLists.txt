@@ -353,9 +353,4 @@ add_compile_definitions_platform()
 set_compiler_flags()
 doxygen()
 
-find_path(ENV_INCLUDE_DIR dc_env/env.h)
-include_directories(${ENV_INCLUDE_DIR})
-find_path(ENV_INCLUDE_DIR dc_env/env.h)
-include_directories(${ENV_INCLUDE_DIR})
-
 add_executable_target(http-server-db-viewer SOURCE_LIST SOURCE_MAIN HEADER_LIST LIBRARIES_LIST "" "")
