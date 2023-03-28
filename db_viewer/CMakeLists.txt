@@ -284,7 +284,8 @@ function(add_executable_target target_name source_files main_source_files header
     add_executable(${target_name} ${${source_files}} ${${main_source_files}} ${${header_files}})
 
     ## for Fedora
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Fedora")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    else()
         find_library(NDBM_LIBRARY NAMES ndbm gdbm_compat)
         target_link_libraries(${target_name} PRIVATE ${NDBM_LIBRARY})
     endif()
