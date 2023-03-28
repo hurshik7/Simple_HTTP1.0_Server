@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
+#include <ncurses.h>
 
 
 #define DB_NAME "post_requests"
