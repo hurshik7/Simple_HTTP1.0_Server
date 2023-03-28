@@ -59,10 +59,6 @@ void httpd(const char* buf, int fd, const char* client_ip_addr)
     printf("uri: %s\n", req.uri);
     printf("version: %d\n", req.version);
 
-    if (req.version != HTTP_VERSION_10) {
-        // TODO handle unsupported version
-    }
-
     switch(req.method) {
         case HTTP_METHOD_GET:
             handle_get_request(fd, &req);
