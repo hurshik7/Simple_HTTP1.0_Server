@@ -2,6 +2,7 @@
 #include "util.h"
 #include "my_ndbm.h"
 #include <assert.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,8 +149,8 @@ void handle_get_request(int fd, const http_req_t* req)
     strcpy(path, root);
     strcat(path, req->uri);
     path[PATH_MAX - 1] = '\0';
-//    printf("%s\n", root);
 
+    errno = 0;
     int file_fd = open(path, O_RDONLY);
     if (file_fd != -1) {
         // FILE FOUND
@@ -182,7 +183,12 @@ void handle_get_request(int fd, const http_req_t* req)
         free(content_size_header);
         free(last_modified_header);
     } else {
-        write(fd, "HTTP/1.0 404 Not Found\r\n", 23);
+        if (errno == EACCES) {
+            // FILE FOUND, BUT NO PERMISSION
+            send(fd, "HTTP/1.0 403 Forbidden\r\n", 23, 0);
+        } else {
+            write(fd, "HTTP/1.0 404 Not Found\r\n", 23);
+        }
     }
 
     shutdown(fd, SHUT_RDWR);
@@ -425,6 +431,7 @@ void handle_head_request(int fd, const http_req_t* req)
     path[PATH_MAX - 1] = '\0';
     printf("%s\n", path);
 
+    errno = 0;
     int file_fd = open(path, O_RDONLY);
     if (file_fd != -1) {
         // FILE FOUND
@@ -450,7 +457,12 @@ void handle_head_request(int fd, const http_req_t* req)
         free(date_header);
         free(content_size_header);
     } else {
-        write(fd, "HTTP/1.0 404 Not Found\r\n", 23);
+        if (errno == EACCES) {
+            // FILE FOUND, BUT NO PERMISSION
+            send(fd, "HTTP/1.0 403 Forbidden\r\n", 23, 0);
+        } else {
+            write(fd, "HTTP/1.0 404 Not Found\r\n", 23);
+        }
     }
 
     shutdown(fd, SHUT_RDWR);
