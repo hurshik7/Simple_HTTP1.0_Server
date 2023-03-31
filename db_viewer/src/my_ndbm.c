@@ -3,7 +3,6 @@
 
 
 // replace print(), perror() with printw() + refresh()
-#include "ncurses_ui.h"
 #define printf(...) do { \
     printw(__VA_ARGS__); \
     refresh(); \
